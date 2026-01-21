@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Find My Cat - $MISSING</title>
 <style>
-  body { margin:0; overflow:hidden; background:black; touch-action: none; }
+  body { margin:0; overflow:hidden; background:#111; touch-action: none; }
   canvas { display:block; }
   #arms {
     position: fixed;
@@ -26,7 +26,6 @@
     font-size: 14px;
     z-index: 5;
   }
-  /* Mobile joystick */
   #joystick {
     position: fixed;
     bottom: 20px;
@@ -50,7 +49,8 @@
 
 // ---------- THREE.JS Setup ----------
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x000000, 5, 50);
+scene.background = new THREE.Color(0x111111);
+scene.fog = new THREE.Fog(0x111111, 5, 50);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 camera.position.y = 1.6;
@@ -59,29 +59,32 @@ const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const light = new THREE.HemisphereLight(0xffffff, 0x222222, 0.8);
+// Licht
+const light = new THREE.HemisphereLight(0xffffff, 0x888888, 1);
 scene.add(light);
 
-// ---------- Simple Labyrinth ----------
-const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x222222 });
+// Boden
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(200,200), floorMat);
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
 
+// Wände
+const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
 function createWall(x, z, w=5, h=3, d=1) {
   const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wallMaterial);
   wall.position.set(x, h/2, z);
   scene.add(wall);
 }
 
-// Generate random walls
+// Labyrinth zufällig
 for (let i=0; i<60; i++){
   createWall(Math.floor(Math.random()*60-30), Math.floor(Math.random()*60-30));
 }
 
 // ---------- Player Movement ----------
 let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
-let pointerDown=false;
-let prevTouchX=0, prevTouchY=0;
-let rotSpeed=0.002;
-let moveSpeed=0.2;
+let rotSpeed=0.002, moveSpeed=0.2;
 
 document.addEventListener('keydown', e => {
   if(e.key==='w') moveForward=true;
@@ -96,7 +99,7 @@ document.addEventListener('keyup', e => {
   if(e.key==='d') moveRight=false;
 });
 
-// Mouse-look (desktop)
+// Maus-Look Desktop
 document.addEventListener('mousemove', e=>{
   if(document.pointerLockElement){
     camera.rotation.y -= e.movementX * rotSpeed;
@@ -108,8 +111,7 @@ document.body.addEventListener('click', ()=>{document.body.requestPointerLock();
 
 // ---------- Mobile Touch ----------
 const joystick = document.getElementById('joystick');
-let joystickTouchId=null;
-let joystickStartX=0, joystickStartY=0;
+let joystickTouchId=null, joystickStartX=0, joystickStartY=0;
 let joyMoveX=0, joyMoveY=0;
 
 joystick.addEventListener('touchstart', e=>{
@@ -151,14 +153,14 @@ const walkSpeed = 0.05;
 function animate(){
   requestAnimationFrame(animate);
   
-  // Desktop movement
+  // Bewegung Desktop
   let dirX=0, dirZ=0;
   if(moveForward) dirZ -= moveSpeed;
   if(moveBackward) dirZ += moveSpeed;
   if(moveLeft) dirX -= moveSpeed;
   if(moveRight) dirX += moveSpeed;
   
-  // Mobile joystick
+  // Bewegung Mobile
   if(joyMoveX || joyMoveY){
     dirX += joyMoveX * 0.01;
     dirZ += joyMoveY * 0.01;
@@ -169,7 +171,7 @@ function animate(){
   camera.position.x += dirX * cosY - dirZ * sinY;
   camera.position.z += dirZ * cosY + dirX * sinY;
 
-  // Arms wackeln beim Laufen
+  // Arme wackeln
   if(moveForward || moveBackward || moveLeft || moveRight || joyMoveX || joyMoveY){
     walkCycle += walkSpeed;
     arms.style.transform = `translateX(-50%) rotate(${Math.sin(walkCycle)*5}deg)`;
@@ -187,6 +189,7 @@ window.addEventListener('resize', ()=>{
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
 </script>
 </body>
 </html>
